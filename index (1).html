@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL 互動式資料庫查詢教學系統</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--ink:#172033;--muted:#64748b;--line:#dce2ec;--accent:#315ee8;--soft:#edf2ff;--good:#13834b;--bad:#c03945}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Noto Sans TC",sans-serif}
+header{background:#172b55;color:white;padding:28px 18px}header .wrap,main,.footer{max-width:1080px;margin:auto}header h1{margin:5px 0;font-size:clamp(24px,4vw,34px)}header p{margin:0;color:#d7e1ff}.eyebrow{font-size:12px;letter-spacing:2px;color:#b9cbff}
+main{padding:22px 16px 48px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}.stat,.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}.stat small,.muted{color:var(--muted)}.stat strong{display:block;font-size:26px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.tabs button,.btn,.exercise{border:1px solid var(--line);border-radius:9px;padding:10px 14px;background:white;color:var(--ink);cursor:pointer;font:inherit}.tabs button.active,.exercise.active{background:var(--soft);border-color:var(--accent);color:var(--accent);font-weight:700}.btn.primary{background:var(--accent);border-color:var(--accent);color:white}.page{display:none}.page.active{display:block}.stack{display:grid;gap:14px}.panel h2,.panel h3{margin:0 0 10px}.panel h2{font-size:20px}.panel h3{font-size:16px}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);white-space:nowrap}th{background:#f2f5fa}.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:9px}.entity{border:1px solid var(--line);border-radius:10px;overflow:hidden}.entity h3{background:#edf2ff;margin:0;padding:9px 12px}.entity ul{margin:0;padding:8px 28px;font-size:14px}.relation{text-align:center;color:var(--muted);font-size:13px;padding:5px}
+.exercise-list{display:grid;gap:8px}.exercise{text-align:left}.exercise span{display:block;color:var(--muted);font-size:12px}.editor{width:100%;min-height:160px;padding:13px;border:1px solid #34415d;border-radius:10px;background:#101a2d;color:#e5edff;font:13px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;resize:vertical}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.status{font-size:12px;border-radius:20px;padding:4px 9px;background:#edf0f5}.status.good{color:var(--good);background:#e8f7ef}.status.bad{color:var(--bad);background:#fff0f0}.message{margin:10px 0;font-size:14px}.result{overflow:auto}.hint{font-size:13px;color:var(--muted)}pre{white-space:pre-wrap;overflow:auto;background:#f2f5fa;padding:12px;border-radius:9px;font-size:13px}
+.barset{display:flex;align-items:end;gap:24px;height:150px;padding:12px 20px}.bar{flex:1;text-align:center}.bar i{display:block;max-width:90px;margin:5px auto;background:#5578e8;border-radius:7px 7px 0 0}.bar:nth-child(2) i{background:#25a47a}.bar:nth-child(3) i{background:#d49b37}.footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+@media(max-width:650px){.stats{gap:7px}.stat{padding:11px}.stat strong{font-size:22px}.grid2,.grid3{grid-template-columns:1fr}.tabs button{flex:1 1 42%;font-size:13px}.panel{padding:13px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="eyebrow">DATABASE LEARNING LAB</div><h1>SQL 互動式資料庫查詢教學系統</h1><p>以校園選課資料庫學習 SQL：設計資料表、執行查詢、觀察結果變化。</p></div></header>
+<main>
+<div class="stats"><div class="stat"><small>資料表</small><strong>3</strong><small>學生／課程／選課</small></div><div class="stat"><small>學生人數</small><strong>5</strong><small>筆樣本資料</small></div><div class="stat"><small>選課紀錄</small><strong>8</strong><small>筆樣本資料</small></div></div>
+<nav class="tabs" aria-label="主要導覽"><button class="active" data-tab="intro">① 案例背景</button><button data-tab="design">② 資料庫設計</button><button data-tab="query">③ SQL 查詢操作</button><button data-tab="compare">④ 結果比較</button></nav>
+<section class="page active stack" id="intro">
+<div class="panel"><h2>一、案例背景</h2><p>本系統提供大學教務處、系辦公室及授課教師使用，集中管理學生基本資料、開設課程與學生選課紀錄。</p><h3>要解決的問題</h3><ul><li>快速查詢學生基本資料與所屬系所。</li><li>查詢每位學生的選課紀錄及成績。</li><li>統計每門課程的選課人數。</li><li>減少人工整理試算表所花費的時間與錯誤。</li></ul></div>
+<div class="grid2"><div class="panel"><h3>教務行政人員</h3><p class="muted">管理學生、課程與選課資料。</p></div><div class="panel"><h3>授課教師</h3><p class="muted">查詢修課名單及學生成績。</p></div><div class="panel"><h3>系辦助理</h3><p class="muted">統計各系學生與課程選修狀況。</p></div><div class="panel"><h3>學生</h3><p class="muted">查詢個人選課與修課紀錄。</p></div></div>
+<div class="panel"><h2>學習目標</h2><p>練習 SELECT、WHERE、ORDER BY、JOIN、GROUP BY、COUNT 等 SQL 語法，並理解修改查詢條件後，結果筆數與內容為何改變。</p><button class="btn primary" data-go="query">開始 SQL 練習 →</button></div>
+</section>
+<section class="page stack" id="design">
+<div class="panel"><h2>二、資料庫 ERD 關聯圖</h2><div class="grid3">
+<div class="entity"><h3>STUDENTS</h3><ul><li><b>PK</b> student_id</li><li>student_name</li><li>department</li><li>grade</li></ul></div>
+<div class="entity"><h3>ENROLLMENTS</h3><ul><li><b>PK</b> enrollment_id</li><li><b>FK</b> student_id</li><li><b>FK</b> course_id</li><li>semester</li><li>score</li></ul></div>
+<div class="entity"><h3>COURSES</h3><ul><li><b>PK</b> course_id</li><li>course_name</li><li>teacher</li><li>credits</li></ul></div>
+</div><div class="relation">STUDENTS 1 ─── N ENROLLMENTS N ─── 1 COURSES</div><p class="hint">學生與課程之間是多對多關係，透過 ENROLLMENTS（選課紀錄表）連接。PK 為主鍵，FK 為外鍵。</p></div>
+<div class="panel"><h2>欄位說明</h2><h3>STUDENTS 學生資料表</h3><div class="scroll"><table><tr><th>欄位</th><th>型態</th><th>說明</th></tr><tr><td>student_id</td><td>VARCHAR</td><td>學生編號（PK）</td></tr><tr><td>student_name</td><td>VARCHAR</td><td>姓名</td></tr><tr><td>department</td><td>VARCHAR</td><td>系所</td></tr><tr><td>grade</td><td>INTEGER</td><td>年級</td></tr></table></div>
+<h3 style="margin-top:18px">COURSES 課程資料表</h3><div class="scroll"><table><tr><th>欄位</th><th>型態</th><th>說明</th></tr><tr><td>course_id</td><td>VARCHAR</td><td>課程編號（PK）</td></tr><tr><td>course_name</td><td>VARCHAR</td><td>課程名稱</td></tr><tr><td>teacher</td><td>VARCHAR</td><td>授課教師</td></tr><tr><td>credits</td><td>INTEGER</td><td>學分數</td></tr></table></div>
+<h3 style="margin-top:18px">ENROLLMENTS 選課紀錄表</h3><div class="scroll"><table><tr><th>欄位</th><th>型態</th><th>說明</th></tr><tr><td>enrollment_id</td><td>INTEGER</td><td>紀錄編號（PK）</td></tr><tr><td>student_id</td><td>VARCHAR</td><td>學生編號（FK）</td></tr><tr><td>course_id</td><td>VARCHAR</td><td>課程編號（FK）</td></tr><tr><td>semester</td><td>VARCHAR</td><td>學期</td></tr><tr><td>score</td><td>INTEGER</td><td>成績</td></tr></table></div></div>
+<div class="panel"><h2>三、樣本資料</h2><h3>學生資料</h3><div class="scroll"><table><tr><th>學號</th><th>姓名</th><th>系所</th><th>年級</th></tr><tr><td>S001</td><td>王小明</td><td>資工系</td><td>2</td></tr><tr><td>S002</td><td>陳小華</td><td>資管系</td><td>3</td></tr><tr><td>S003</td><td>林大偉</td><td>資工系</td><td>1</td></tr><tr><td>S004</td><td>張雅婷</td><td>資管系</td><td>2</td></tr><tr><td>S005</td><td>李志豪</td><td>企管系</td><td>3</td></tr></table></div>
+<h3 style="margin-top:16px">課程資料</h3><div class="scroll"><table><tr><th>課號</th><th>課程名稱</th><th>教師</th><th>學分</th></tr><tr><td>C001</td><td>資料庫系統</td><td>王老師</td><td>3</td></tr><tr><td>C002</td><td>Java 程式設計</td><td>陳老師</td><td>3</td></tr><tr><td>C003</td><td>網頁設計</td><td>林老師</td><td>2</td></tr><tr><td>C004</td><td>資料結構</td><td>張老師</td><td>3</td></tr></table></div>
+<h3 style="margin-top:16px">選課紀錄</h3><div class="scroll"><table><tr><th>ID</th><th>學號</th><th>課號</th><th>學期</th><th>成績</th></tr><tr><td>1</td><td>S001</td><td>C001</td><td>114-1</td><td>90</td></tr><tr><td>2</td><td>S001</td><td>C002</td><td>114-1</td><td>85</td></tr><tr><td>3</td><td>S002</td><td>C001</td><td>114-1</td><td>78</td></tr><tr><td>4</td><td>S002</td><td>C003</td><td>114-1</td><td>92</td></tr><tr><td>5</td><td>S003</td><td>C002</td><td>114-1</td><td>88</td></tr><tr><td>6</td><td>S003</td><td>C004</td><td>114-1</td><td>95</td></tr><tr><td>7</td><td>S004</td><td>C003</td><td>114-1</td><td>80</td></tr><tr><td>8</td><td>S005</td><td>C001</td><td>114-1</td><td>65</td></tr></table></div></div>
+</section>
+<section class="page stack" id="query">
+<div class="panel"><h2>四、選擇查詢題目</h2><p class="hint">選擇題目會自動載入 SQL 範例。你可以自行修改、執行，查看結果或錯誤訊息。</p><div class="exercise-list" id="exercises">
+<button class="exercise active" data-ex="0">題目 1：查詢所有學生<span>SELECT、FROM</span></button><button class="exercise" data-ex="1">題目 2：查詢資工系學生<span>WHERE 條件篩選</span></button><button class="exercise" data-ex="2">題目 3：查詢成績由高到低<span>ORDER BY 排序</span></button><button class="exercise" data-ex="3">題目 4：查詢學生及選課課程<span>INNER JOIN 多表關聯</span></button><button class="exercise" data-ex="4">題目 5：統計各課程選課人數<span>GROUP BY、COUNT</span></button><button class="exercise" data-ex="5">題目 6：查詢不及格成績<span>WHERE、比較運算</span></button></div></div>
+<div class="panel"><h2>SQL 編輯器</h2><p id="question" class="hint">查詢所有學生的基本資料。</p><textarea class="editor" id="editor" spellcheck="false" aria-label="SQL 編輯器"></textarea><div class="actions"><button class="btn primary" id="run">▶ 執行 SQL</button><button class="btn" id="reset">還原範例</button><button class="btn" id="clear">清空</button></div><p class="hint">支援本教學資料集的 SELECT、WHERE、JOIN、GROUP BY、ORDER BY、LIMIT 及基本聚合函數。此為瀏覽器內的教學模擬執行器，並非正式資料庫伺服器。</p></div>
+<div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h2>執行結果</h2><span class="status" id="status">尚未執行</span></div><div class="message" id="message">請選擇題目並按下「執行 SQL」。</div><div class="result" id="output"><p class="hint">查詢結果將顯示於此。</p></div></div>
+<div class="panel"><h3>SQL 語法提示</h3><p class="hint"><code>SELECT 欄位 FROM 資料表</code>：指定查詢欄位<br><code>WHERE 條件</code>：篩選資料<br><code>ORDER BY 欄位 DESC</code>：由大到小排序<br><code>JOIN</code>：合併關聯資料表<br><code>GROUP BY</code>：分組統計<br><code>COUNT(*)</code>：計算資料筆數</p></div>
+</section>
+<section class="page stack" id="compare">
+<div class="panel"><h2>五、修改 SQL 前後的結果比較</h2><p>以下使用相同資料庫，逐步增加查詢條件，觀察資料筆數的變化。</p></div>
+<div class="panel"><h3>版本 A：查詢所有學生</h3><pre>SELECT * FROM STUDENTS;</pre><b>結果：5 筆資料</b><p class="hint">沒有 WHERE 條件，因此顯示所有學生。</p></div>
+<div class="panel"><h3>版本 B：只查詢資工系學生</h3><pre>SELECT * FROM STUDENTS
+WHERE department = '資工系';</pre><b>結果：2 筆資料</b><p class="hint">加入 WHERE 條件，只保留系所為資工系的學生。</p></div>
+<div class="panel"><h3>版本 C：只查詢二年級以上的資工系學生</h3><pre>SELECT * FROM STUDENTS
+WHERE department = '資工系'
+AND grade >= 2;</pre><b>結果：1 筆資料（王小明）</b><p class="hint">增加 AND grade &gt;= 2，必須同時符合兩項條件。</p></div>
+<div class="panel"><h3>結果數量變化</h3><div class="barset"><div class="bar"><b>5 筆</b><i style="height:90px"></i><small>A</small></div><div class="bar"><b>2 筆</b><i style="height:36px"></i><small>B</small></div><div class="bar"><b>1 筆</b><i style="height:18px"></i><small>C</small></div></div></div>
+<div class="panel"><h3>修改 SQL 的原因與影響</h3><ul><li>加入 WHERE：縮小資料查詢範圍。</li><li>使用 AND：要求多個條件必須同時成立。</li><li>修改比較運算子：改變符合條件的資料。</li><li>加入 ORDER BY：不改變筆數，但會改變顯示順序。</li><li>使用 GROUP BY：依欄位分組並統計。</li></ul><button class="btn primary" data-go="query">親自修改 SQL 試試看 →</button></div>
+</section>
+</main><div class="footer">SQL Learning Lab · 校園選課資料庫教學專題</div>
+<script>
+"use strict";
+const DB={
+STUDENTS:[
+{student_id:"S001",student_name:"王小明",department:"資工系",grade:2},
+{student_id:"S002",student_name:"陳小華",department:"資管系",grade:3},
+{student_id:"S003",student_name:"林大偉",department:"資工系",grade:1},
+{student_id:"S004",student_name:"張雅婷",department:"資管系",grade:2},
+{student_id:"S005",student_name:"李志豪",department:"企管系",grade:3}],
+COURSES:[
+{course_id:"C001",course_name:"資料庫系統",teacher:"王老師",credits:3},
+{course_id:"C002",course_name:"Java 程式設計",teacher:"陳老師",credits:3},
+{course_id:"C003",course_name:"網頁設計",teacher:"林老師",credits:2},
+{course_id:"C004",course_name:"資料結構",teacher:"張老師",credits:3}],
+ENROLLMENTS:[
+{enrollment_id:1,student_id:"S001",course_id:"C001",semester:"114-1",score:90},
+{enrollment_id:2,student_id:"S001",course_id:"C002",semester:"114-1",score:85},
+{enrollment_id:3,student_id:"S002",course_id:"C001",semester:"114-1",score:78},
+{enrollment_id:4,student_id:"S002",course_id:"C003",semester:"114-1",score:92},
+{enrollment_id:5,student_id:"S003",course_id:"C002",semester:"114-1",score:88},
+{enrollment_id:6,student_id:"S003",course_id:"C004",semester:"114-1",score:95},
+{enrollment_id:7,student_id:"S004",course_id:"C003",semester:"114-1",score:80},
+{enrollment_id:8,student_id:"S005",course_id:"C001",semester:"114-1",score:65}]
+};
+const EX=[
+["查詢所有學生的基本資料。","SELECT * FROM STUDENTS;"],
+["查詢所有資工系的學生。","SELECT * FROM STUDENTS WHERE department = '資工系';"],
+["查詢所有選課紀錄，依成績由高到低排序。","SELECT * FROM ENROLLMENTS ORDER BY score DESC;"],
+["查詢學生姓名及其選修課程名稱。","SELECT s.student_name, c.course_name, e.score FROM STUDENTS s JOIN ENROLLMENTS e ON s.student_id = e.student_id JOIN COURSES c ON e.course_id = c.course_id;"],
+["統計各課程的選課人數。","SELECT c.course_name, COUNT(*) AS student_count FROM COURSES c JOIN ENROLLMENTS e ON c.course_id = e.course_id GROUP BY c.course_name;"],
+["查詢成績低於 60 分的選課紀錄。","SELECT * FROM ENROLLMENTS WHERE score < 60;"]
+];
+const $=s=>document.querySelector(s), editor=$("#editor");
+let current=0;
+document.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.tab)));
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.go)));
+function showPage(id){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===id));}
+function loadExercise(i){current=i;document.querySelectorAll("[data-ex]").forEach(b=>b.classList.toggle("active",Number(b.dataset.ex)===i));editor.value=EX[i][1];$("#question").textContent=EX[i][0];$("#output").innerHTML='<p class="hint">按下執行 SQL 查看結果。</p>';$("#message").textContent="尚未執行查詢。";$("#status").textContent="尚未執行";$("#status").className="status";}
+document.querySelectorAll("[data-ex]").forEach(b=>b.addEventListener("click",()=>loadExercise(Number(b.dataset.ex))));
+$("#reset").addEventListener("click",()=>loadExercise(current));$("#clear").addEventListener("click",()=>editor.value="");$("#run").addEventListener("click",runSQL);
+function tokenize(s){let a=[],i=0;while(i<s.length){if(/\s/.test(s[i])){i++;continue;}if(s[i]==="'"||s[i]==='"'){let q=s[i++],v="";while(i<s.length&&s[i]!==q)v+=s[i++];if(i===s.length)throw Error("字串缺少結尾引號。");i++;a.push({v,str:true});continue;}let m=s.slice(i).match(/^(>=|<=|<>|!=|[=<>(),*;])|^([A-Za-z_][A-Za-z0-9_.]*)|^(-?\d+(?:\.\d+)?)/);if(!m)throw Error("無法辨識的語法："+s.slice(i,i+12));a.push({v:m[0],str:false});i+=m[0].length;}return a;}
+function query(sql){
+if(!sql.trim())throw Error("請輸入 SQL 查詢指令。");
+if(/--|\/\*/.test(sql))throw Error("教學執行器不支援 SQL 註解。");
+sql=sql.trim().replace(/;$/,"");if(sql.includes(";"))throw Error("一次請輸入一條 SQL 指令。");
+let t=tokenize(sql),p=0;const peek=()=>t[p]?.v?.toUpperCase(),take=()=>t[p++],need=x=>{if(peek()!==x)throw Error("語法錯誤：預期 "+x+"，目前為 "+(peek()||"指令結尾"));return take();};
+if(peek()!=="SELECT")throw Error("目前只支援 SELECT 查詢，請以 SELECT 開始。");take();
+let fields=[];if(peek()==="*"){take();fields=["*"];}else{while(true){let x=take();if(!x||x.str)throw Error("SELECT 欄位名稱錯誤。");let name=x.v;if(peek()==="("){take();let arg=take();if(!arg)throw Error("聚合函數缺少參數。");need(")");name+="("+arg.v+")";}if(peek()==="AS"){take();name+=" AS "+take().v;}fields.push(name);if(peek()!==",")break;take();}}
+need("FROM");let table=take()?.v?.toUpperCase();if(!DB[table])throw Error("找不到資料表："+table+"。可用資料表：STUDENTS、COURSES、ENROLLMENTS。");
+let alias=table;if(peek()&&!["WHERE","JOIN","INNER","GROUP","ORDER","LIMIT"].includes(peek()))alias=take().v.toUpperCase();
+let rows=DB[table].map(r=>{let o={};for(let [k,v] of Object.entries(r)){o[k]=v;o[alias+"."+k]=v;}return o;});
+function val(r,k){k=k.toLowerCase();let exact=Object.keys(r).find(x=>x.toLowerCase()===k);if(exact!==undefined)return r[exact];let matches=Object.keys(r).filter(x=>x.split(".").pop().toLowerCase()===k);if(matches.length===1)return r[matches[0]];if(!matches.length)throw Error("找不到欄位："+k);throw Error("欄位 "+k+" 不明確，請使用資料表別名。");}
+while(peek()==="JOIN"||peek()==="INNER"){if(peek()==="INNER")take();need("JOIN");let tb=take()?.v?.toUpperCase();if(!DB[tb])throw Error("找不到 JOIN 資料表："+tb);let al=tb;if(peek()!=="ON")al=take().v.toUpperCase();need("ON");let l=take()?.v,op=take()?.v,r=take()?.v;if(op!=="=")throw Error("JOIN 目前只支援等號關聯。");let joined=[];for(let a of rows)for(let b of DB[tb]){let o={...a};for(let [k,v] of Object.entries(b)){o[k]=v;o[al+"."+k]=v;}if(val(o,l)===val(o,r))joined.push(o);}rows=joined;}
+if(peek()==="WHERE"){
+ take();
+ // 先解析一次 WHERE 條件，再逐筆資料套用；避免 filter 每次執行都消耗同一組 token。
+ const conditions=[];
+ function readCondition(){
+  let k=take()?.v,op=take()?.v,v=take();
+  if(!k||!op||!v)throw Error("WHERE 條件不完整，請確認欄位、比較運算子與比較值是否齊全。");
+  if(!["=","!=","<>",">","<",">=","<="].includes(op))throw Error("不支援的比較運算子："+op);
+  return {k,op,v};
+ }
+ conditions.push(readCondition());
+ while(peek()==="AND"||peek()==="OR"){
+  const connector=take().v.toUpperCase();
+  conditions.push({connector,condition:readCondition()});
+ }
+ function evaluate(r,c){
+  const left=val(r,c.k),v=c.v;
+  const right=v.str?v.v:(/^[-\d]/.test(v.v)?Number(v.v):v.v.toUpperCase()==="NULL"?null:val(r,v.v));
+  switch(c.op){case "=":return left===right;case "!=":case "<>":return left!==right;case ">":return left>right;case "<":return left<right;case ">=":return left>=right;case "<=":return left<=right;}
+ }
+ rows=rows.filter(r=>{
+  let result=evaluate(r,conditions[0]);
+  for(let i=1;i<conditions.length;i++){
+   const item=conditions[i],next=evaluate(r,item.condition);
+   result=item.connector==="AND"?result&&next:result||next;
+  }
+  return result;
+ });
+}
+let groups=[];if(peek()==="GROUP"){take();need("BY");do{groups.push(take().v.toLowerCase());if(peek()!==",")break;take();}while(true);}
+let orders=[];if(peek()==="ORDER"){take();need("BY");do{let k=take().v.toLowerCase(),d="ASC";if(peek()==="ASC"||peek()==="DESC")d=take().v;orders.push([k,d]);if(peek()!==",")break;take();}while(true);}
+let limit=null;if(peek()==="LIMIT"){take();limit=Number(take()?.v);if(!Number.isInteger(limit)||limit<0)throw Error("LIMIT 必須為非負整數。");}
+if(p<t.length)throw Error("不支援或無法辨識的 SQL 語法："+t.slice(p).map(x=>x.v).join(" "));
+let out;
+const aggregate=fields.map(s=>s.match(/^(COUNT|SUM|AVG|MAX|MIN)\s*\(\s*(.*?)\s*\)(?:\s+AS\s+(.+))?$/i));
+if(groups.length){let map=new Map();rows.forEach(r=>{let id=JSON.stringify(groups.map(k=>val(r,k)));if(!map.has(id))map.set(id,[]);map.get(id).push(r);});out=[...map.values()].map(g=>{let o={};groups.forEach(k=>o[k]=val(g[0],k));fields.forEach((f,i)=>{let m=aggregate[i];if(m){let fn=m[1].toUpperCase(),col=m[2],v=col==="*"?g.map(()=>1):g.map(r=>Number(val(r,col)));o[(m[3]||fn+"("+col+")").toLowerCase()]=fn==="COUNT"?g.length:fn==="SUM"?v.reduce((a,b)=>a+b,0):fn==="AVG"?v.reduce((a,b)=>a+b,0)/v.length:fn==="MAX"?Math.max(...v):Math.min(...v);}});return o;});}
+else if(aggregate.some(Boolean)){if(fields.length!==1||!aggregate[0])throw Error("此教學版本一次只支援一個聚合欄位。");let m=aggregate[0],fn=m[1].toUpperCase(),col=m[2],v=col==="*"?rows.map(()=>1):rows.map(r=>Number(val(r,col)));out=[{[m[3]||fn+"("+col+")"]:fn==="COUNT"?rows.length:fn==="SUM"?v.reduce((a,b)=>a+b,0):fn==="AVG"?(v.reduce((a,b)=>a+b,0)/(v.length||1)):fn==="MAX"?Math.max(...v):Math.min(...v)}];}
+else if(fields[0]==="*"){let keys=Object.keys(DB[table][0]);out=rows.map(r=>Object.fromEntries(keys.map(k=>[k,val(r,k)])));}
+else out=rows.map(r=>Object.fromEntries(fields.map(f=>{let m=f.match(/^(.+?)\s+AS\s+(.+)$/i),k=(m?m[1]:f).trim();return [m?m[2]:k,val(r,k)];})));
+if(orders.length)out.sort((a,b)=>{for(let [k,d] of orders){let key=Object.keys(a).find(x=>x.toLowerCase()===k)||k.split(".").pop(),x=a[key],y=b[key];if(x!==y)return (x>y?1:-1)*(d==="DESC"?-1:1);}return 0;});
+if(limit!==null)out=out.slice(0,limit);return out;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function runSQL(){try{let data=query(editor.value);$("#status").textContent="✓ 執行成功";$("#status").className="status good";$("#message").textContent="查詢成功！共取得 "+data.length+" 筆資料。";if(!data.length){$("#output").innerHTML='<p class="muted">查詢成功，但沒有符合條件的資料。</p>';return;}let keys=Object.keys(data[0]);$("#output").innerHTML="<table><thead><tr>"+keys.map(k=>"<th>"+esc(k)+"</th>").join("")+"</tr></thead><tbody>"+data.map(r=>"<tr>"+keys.map(k=>"<td>"+esc(r[k]===null?"NULL":r[k])+"</td>").join("")+"</tr>").join("")+"</tbody></table>";}catch(e){$("#status").textContent="✕ 執行錯誤";$("#status").className="status bad";$("#message").textContent="SQL 錯誤："+e.message;$("#output").innerHTML="";}}
+loadExercise(0);
+</script>
+</body></html>
